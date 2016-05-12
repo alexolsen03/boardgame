@@ -1,4 +1,5 @@
 var webpack = require('webpack');
+var path = require('path');
 
 module.exports = {
     entry: "./index.js",
@@ -14,14 +15,18 @@ module.exports = {
     },
     module: {
         loaders: [
-            { test: /\.css$/, loader: "style!css" },
+            { test: /\.scss$/,
+              exclude: /node_modules/,
+              loader: "style!css!sass" },
             {
-              test: /\.jsx?$/,
+              test: /\.js?$/,
               exclude: /(node_modules|bower_components)/,
-              loader: 'babel-loader', // 'babel-loader' is also a legal name to reference
-              query: {
-                presets: ['es2015']
-              }
+              loader: 'babel', // 'babel-loader' is also a legal name to reference
+            },
+            {
+                test: /\.(jpg|png|gif)$/,
+                include: /img/,
+                loader: 'url'
             }
         ]
     }, plugins: {
