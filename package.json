@@ -2,7 +2,7 @@
   "name": "boardgame",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/bundle.js",
   "scripts": {
     "build": "babel lib -d dist"
   },
