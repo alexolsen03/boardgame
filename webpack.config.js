@@ -4,7 +4,10 @@ module.exports = {
     entry: "./index.js",
     output: {
         path: __dirname,
-        filename: "bundle.js"
+        filename: "bundle.js",
+        library: "boardgame",
+        libraryTarget: "umd",
+        umdNamedDefine: true
     },
     externals: {
         jquery: 'jQuery'
@@ -21,5 +24,8 @@ module.exports = {
               }
             }
         ]
+    }, plugins: {
+        $: 'jquery',
+        jQuery: 'jquery'
     }
 };
