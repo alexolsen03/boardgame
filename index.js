@@ -3,7 +3,7 @@ import load from './lib/board';
 
 require('./main.scss');
 
-export {
+export default {
 	TileMages,
 	load
 }

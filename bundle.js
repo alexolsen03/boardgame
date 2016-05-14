@@ -59,7 +59,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.load = exports.TileMages = undefined;
 
 	var _tilemages = __webpack_require__(1);
 
@@ -73,8 +72,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(3);
 
-	exports.TileMages = _tilemages2.default;
-	exports.load = _board2.default;
+	exports.default = {
+		TileMages: _tilemages2.default,
+		load: _board2.default
+	};
+	module.exports = exports['default'];
 
 /***/ },
 /* 1 */
@@ -178,7 +180,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		a1: 0, b1: 1, c1: 2, d1: 3, e1: 4, f1: 5, g1: 6, h1: 7, i1: 8, j1: 9
 	};
 
-	var DEFAULT_POSITION = 'skmassamks/10/10/10/10/10/10/10/10/SKMASSAMKS';
+	var DEFAULT_POSITION = 'SKMASSAMKS/10/10/10/10/10/10/10/10/skmassamks r';
 	var DEFAULT_TERRA_STATE = '10/10/10/10/10/10/10/10/10/10';
 
 	var TileMages = function () {
@@ -191,15 +193,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 			// init values
 			this.squares = SQUARES;
-			this.turn = TEAM_A;
 			this.turnActions = 0;
 
 			// load board
 			if (typeof fen === 'undefined') {
+				this.turn = TEAM_A;
 				this.load(DEFAULT_POSITION);
 			} else if (fen === 'start') {
+				this.turn = TEAM_A;
 				this.load(DEFAULT_POSITION);
 			} else {
+				this.turn = fen.split(' ')[1];
+				console.log('turn is! ' + this.turn);
 				this.load(fen);
 			}
 
@@ -227,7 +232,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 						square += num;
 					} else {
-						var color = piece < 'a' ? TEAM_B : TEAM_A;
+						var color = piece < 'a' ? TEAM_A : TEAM_B;
 
 						var p = {
 							color: color,
@@ -314,7 +319,40 @@ return /******/ (function(modules) { // webpackBootstrap
 						fen += color === TEAM_A ? piece.toUpperCase() : piece;
 					}
 
-					console.log(SQUARES.j1);
+					if (i > 0 && (i + 1) % 10 === 0 && i + 1 < SQUARES.j10) {
+						fen += '/';
+					}
+				}
+
+				// squeeze the numbers together
+				// haha, I love this solution...
+				fen = fen.replace(/1111111111/g, '10');
+				fen = fen.replace(/111111111/g, '9');
+				fen = fen.replace(/11111111/g, '8');
+				fen = fen.replace(/1111111/g, '7');
+				fen = fen.replace(/111111/g, '6');
+				fen = fen.replace(/11111/g, '5');
+				fen = fen.replace(/1111/g, '4');
+				fen = fen.replace(/111/g, '3');
+				fen = fen.replace(/11/g, '2');
+
+				fen += ' ' + this.turn;
+
+				return fen;
+			}
+		}, {
+			key: 'generateBoardFen',
+			value: function generateBoardFen() {
+				var fen = '';
+
+				for (var i = 0; i < this.terraState.length; i++) {
+					if (!this.terraState[i]) {
+						fen += 1;
+					} else {
+
+						fen += this.terraState[i];
+					}
+
 					if (i > 0 && (i + 1) % 10 === 0 && i + 1 < SQUARES.j10) {
 						fen += '/';
 					}
@@ -465,6 +503,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				});
 
 				console.log(this.generateFen());
+				console.log(this.generateBoardFen());
 
 				return spaces;
 			}
@@ -895,7 +934,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		return desiredTiles.sort();
 	}
 
-	exports.TileMages = TileMages;
+	exports.default = { TileMages: TileMages };
+	module.exports = exports['default'];
 
 /***/ },
 /* 2 */
@@ -910,7 +950,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 	var COLUMNS = 'abcdefghij'.split(''),
-	    START_FEN = 'SKMASSAMKS/10/10/10/10/10/10/10/10/skmassamks',
+	    START_FEN = 'SKMASSAMKS/10/10/10/10/10/10/10/10/skmassamks r',
 	    START_BOARD_FEN = '10/10/10/10/10/10/10/10/10/10',
 	    START_BOARD_POSITION = fenBoardToObj(START_BOARD_FEN),
 	    START_POSITION = fenToObj(START_FEN),
@@ -932,7 +972,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    terraControlsElId = void 0,
 	    terraControlsEl = void 0,
 	    boardEl = void 0,
-	    draggedPieceEl = void 0;
+	    draggedPieceEl = void 0,
+	    draggedPieceId = void 0;
 
 	var terraformType = void 0;
 
@@ -988,15 +1029,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	  createElIds();
 
 	  // create the drag piece
-	  var draggedPieceId = uuid();
+	  if (!draggedPieceId) draggedPieceId = uuid();
 	  $('body').append(buildPiece('aS', true, draggedPieceId));
 	  draggedPieceEl = $('#' + draggedPieceId);
 
+	  containerEl.empty();
 	  containerEl.html(buildBoardContainer());
+
 	  boardEl = containerEl.find('.' + CSS.board);
+	  boardEl.empty();
+	  boardEl.html(buildBoard());
+
+	  terraControlsEl.empty();
 	  terraControlsEl.html(buildTerraformControls());
 
-	  boardEl.html(buildBoard());
 	  drawPositionInstant();
 
 	  addEvents();
@@ -1195,6 +1241,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // clear the board
 	  boardEl.find('.' + CSS.piece).remove();
 
+	  console.log('drawing opsition!');
+	  console.log(CURRENT_POSITION);
+
 	  // add the pieces
 	  for (var i in CURRENT_POSITION) {
 	    if (CURRENT_POSITION.hasOwnProperty(i) !== true) continue;
@@ -1286,17 +1335,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } else if (action === 'trash') {
 	    trashDraggedPiece();
 	  } else if (action === 'drop') {
-	    dropDraggedPieceOnSquare(location);
+	    dropDraggedPieceOnSquare(location, newPosition);
 	  }
 	}
 
-	function dropDraggedPieceOnSquare(square) {
+	function dropDraggedPieceOnSquare(square, newPos) {
 	  removeSquareHighlights();
 
 	  // update position
-	  var newPosition = deepCopy(CURRENT_POSITION);
+	  var newPosition = newPos;
 	  delete newPosition[DRAGGED_PIECE_SOURCE];
 	  newPosition[square] = DRAGGED_PIECE;
+
 	  setCurrentPosition(newPosition);
 
 	  // get target square information
@@ -1304,18 +1354,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // animation complete
 	  var complete = function complete() {
-	    drawPositionInstant();
+	    console.log('animating');
+	    console.log(draggedPieceEl);
+
+	    //   drawPositionInstant();
 	    draggedPieceEl.css('display', 'none');
 
 	    // execute their onSnapEnd function
 	    if (cfg.hasOwnProperty('onSnapEnd') === true && typeof cfg.onSnapEnd === 'function') {
 	      cfg.onSnapEnd(DRAGGED_PIECE_SOURCE, square, DRAGGED_PIECE);
 	    }
+
+	    console.log('ended complete!');
 	  };
 
 	  // snap the piece to the target square
 	  var opts = {
-	    duration: cfg.snapSpeed,
+	    duration: cfg.snapSpeed || 100,
 	    complete: complete
 	  };
 	  draggedPieceEl.animate(targetSquarePosition, opts);
@@ -1327,7 +1382,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var lostSoldiers = cfg.onDrop(DRAGGED_PIECE_SOURCE, square);
 	    if (lostSoldiers && lostSoldiers.length > 0) {
 
-	      // update position
 	      var newPosition = deepCopy(CURRENT_POSITION);
 	      lostSoldiers.forEach(function (square) {
 	        delete newPosition[square];
@@ -1335,6 +1389,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 
 	      setCurrentPosition(newPosition);
+
+	      drawPositionInstant();
+	    }
+
+	    if (cfg.onTurnEnd) {
+	      console.log('on turn end!');
+	      cfg.onTurnEnd();
 
 	      drawPositionInstant();
 	    }
@@ -1594,7 +1655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  var fen = '';
 
-	  var currentRow = 10;
+	  var currentRow = 0;
 	  for (var i = 0; i < 10; i++) {
 	    for (var j = 0; j < 10; j++) {
 	      var square = COLUMNS[j] + currentRow;
@@ -1614,7 +1675,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      fen += '/';
 	    }
 
-	    currentRow--;
+	    currentRow++;
 	  }
 
 	  // squeeze the numbers together
@@ -1721,12 +1782,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var newFen = objToFen(newPos);
 
 	  // do nothing if no change in position
-	  if (oldFen === newFen) return;
+	  // if (oldFen === newFen) return;
 
 	  // run their onChange function
-	  if (cfg.hasOwnProperty('onChange') === true && typeof cfg.onChange === 'function') {
-	    cfg.onChange(oldPos, newPos);
-	  }
+	  /*  if (cfg.hasOwnProperty('onChange') === true &&
+	      typeof cfg.onChange === 'function') {
+	      cfg.onChange(oldPos, newPos);
+	    }*/
 
 	  // update state
 	  CURRENT_POSITION = position;
@@ -1736,7 +1798,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  boardEl.find('.' + CSS.square).removeClass(CSS.highlight1 + ' ' + CSS.highlight2);
 	}
 
-	exports.load = load;
+	exports.default = { load: load };
+	module.exports = exports['default'];
 
 /***/ },
 /* 3 */
