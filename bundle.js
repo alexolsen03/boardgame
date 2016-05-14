@@ -154,19 +154,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var RANK_9 = 1;
 	var RANK_10 = 0;
 
-	/*const SQUARES = {
-	a10:     0, b10:    1, c10:    2, d10:   3, e10:  4, f10:  5, g10:   6,  h10:   7,     i10: 8,  j10: 9,
-	  a9:   10,   b9:  11,   c9:   12, d9:  13, e9:  14, f9:  15, g9:  16,     h9:  17,    i9: 18,    j9: 19,
-	  a8:   20,   b8:   21,  c8:   22, d8:  23, e8:  24, f8:  25, g8:   26,    h8:   27,   i8: 28,  j8: 29,
-	  a7:   30,   b7:   31,  c7:  32, d7:  33, e7:   34, f7:  35, g7:  36,      h7:  37,	i7: 38,  j7: 39,
-	  a6:   40,   b6:   41,   c6:  42, d6:  43, e6:  44, f6:  45, g6:  46,     h6:  47,	i6: 48,  j6: 49,
-	  a5:   50,   b5:   51,   c5:  52, d5:  53, e5:  54, f5:  55, g5:  56,     h5:  57,	i5: 58,  j5: 59,
-	  a4:   60,   b4:   61,   c4:  62, d4:  63, e4:  64, f4:  65, g4:  66,     h4:  67,	i4: 68,  j4: 69,
-	  a3:   70,   b3:   71,   c3:  72, d3:  73, e3:  74, f3:  75, g3:  76,     h3:  77,	i3: 78,  j3: 79,
-	  a2:   80,   b2:   81,   c2:  82, d2:  83, e2:  84, f2:  85, g2:  86,     h2:  87,	i2: 88,  j2: 89,
-	  a1:   90,   b1:   91, c1:    92, d1:  93, e1:  94, f1:  95, g1:  96,     h1:  97,	i1: 98,  j1: 99,
-	};*/
-
 	var SQUARES = {
 		a10: 90, b10: 91, c10: 92, d10: 93, e10: 94, f10: 95, g10: 96, h10: 97, i10: 98, j10: 99,
 		a9: 80, b9: 81, c9: 82, d9: 83, e9: 84, f9: 85, g9: 86, h9: 87, i9: 88, j9: 89,
@@ -180,11 +167,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		a1: 0, b1: 1, c1: 2, d1: 3, e1: 4, f1: 5, g1: 6, h1: 7, i1: 8, j1: 9
 	};
 
-	var DEFAULT_POSITION = 'SKMASSAMKS/10/10/10/10/10/10/10/10/skmassamks r';
+	var DEFAULT_POSITION = 'SKMASSAMKS/10/10/10/10/10/10/10/10/skmassamks r 0';
 	var DEFAULT_TERRA_STATE = '10/10/10/10/10/10/10/10/10/10';
 
 	var TileMages = function () {
-		function TileMages(fen) {
+		function TileMages(fen, boardFen) {
 			_classCallCheck(this, TileMages);
 
 			// game objects
@@ -193,9 +180,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 			// init values
 			this.squares = SQUARES;
-			this.turnActions = 0;
 
-			// load board
+			// load pieces
 			if (typeof fen === 'undefined') {
 				this.turn = TEAM_A;
 				this.load(DEFAULT_POSITION);
@@ -208,7 +194,16 @@ return /******/ (function(modules) { // webpackBootstrap
 				this.load(fen);
 			}
 
-			this.loadTerraState(DEFAULT_TERRA_STATE);
+			// load board
+			if (typeof boardFen === 'undefined') {
+				this.loadTerraState(DEFAULT_TERRA_STATE);
+			} else if (fen === 'start') {
+				this.loadTerraState(DEFAULT_TERRA_STATE);
+			} else {
+				this.loadTerraState(boardFen);
+			}
+
+			this.turnActions = fen.split(' ')[2];
 		}
 
 		_createClass(TileMages, [{
@@ -336,7 +331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				fen = fen.replace(/111/g, '3');
 				fen = fen.replace(/11/g, '2');
 
-				fen += ' ' + this.turn;
+				fen += ' ' + this.turn + ' ' + this.turnActions;
 
 				return fen;
 			}
@@ -502,10 +497,20 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				});
 
-				console.log(this.generateFen());
-				console.log(this.generateBoardFen());
+				console.log('reset.');
 
 				return spaces;
+			}
+		}, {
+			key: 'isActionsLeft',
+			value: function isActionsLeft() {
+				console.log(this.turnActions + ' out of ' + MAX_ACTIONS_ALLOWED);
+
+				if (this.turnActions >= MAX_ACTIONS_ALLOWED) {
+					return false;
+				}
+
+				return true;
 			}
 		}, {
 			key: 'conductBattles',
@@ -1011,10 +1016,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (!cfg.position || cfg.position === 'start') cfg.position = START_FEN;
 
+	  if (!cfg.boardPosition || cfg.boardPosition === 'start') cfg.boardPosition = START_BOARD_FEN;
+
 	  cfg.pieceTheme = '/public/img/{piece}.png';
 
 	  CURRENT_POSITION = fenToObj(cfg.position);
-	  CURRENT_BOARD_POSITION = fenBoardToObj(START_BOARD_FEN);
+	  CURRENT_BOARD_POSITION = fenBoardToObj(cfg.boardPosition);
 
 	  containerElId = containerElIdVal;
 	  terraControlsElId = terraControlsElIdVal;
@@ -1437,13 +1444,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    removeSquareHighlights();
 	    var lostSoldiers = cfg.terraform(terraformType, square);
 
-	    if (lostSoldiers) {
-	      console.log('remove ');
-	      console.log(lostSoldiers);
-	    }
-
 	    CURRENT_BOARD_POSITION[square] = terraformType;
-	    drawBoardPositionInstant();
+	    if (cfg.onTurnEnd) {
+
+	      cfg.onTurnEnd();
+
+	      drawBoardPositionInstant();
+	    }
 	  } else {
 
 	    // no piece on this square
