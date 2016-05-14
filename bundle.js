@@ -203,7 +203,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				this.loadTerraState(boardFen);
 			}
 
-			this.turnActions = fen.split(' ')[2];
+			this.turnActions = parseInt(fen.split(' ')[2]);
 		}
 
 		_createClass(TileMages, [{
@@ -450,10 +450,12 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: 'generateTerraformOptions',
 			value: function generateTerraformOptions() {
 				var options = [];
+				var me = this;
 
 				for (var i = 0; i < this.board.length; i++) {
 					var piece = this.board[i];
-					if (piece && piece.type === 'm' && piece.color === this.turn && piece.performedActions === 0 && this.turnActions === 0) {
+
+					if (piece && piece.type === 'm' && piece.color === me.turn && piece.performedActions === 0 && me.turnActions === 0) {
 						var space = indexToNotation(i);
 
 						var oneAway = getTilesInCircleFrom(indexToNotation(i), 1);
