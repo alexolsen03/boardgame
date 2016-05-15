@@ -44,7 +44,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.c = installedModules;
 
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "./";
+/******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
@@ -1047,6 +1047,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // create the drag piece
 	  if (!draggedPieceId) draggedPieceId = uuid();
+
 	  $('body').append(buildPiece('aS', true, draggedPieceId));
 	  draggedPieceEl = $('#' + draggedPieceId);
 
@@ -1063,42 +1064,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  drawPositionInstant();
 
 	  addEvents();
-	}
-
-	function mouseenterSquare(e) {
-	  // do not fire this event if we are dragging a piece
-	  // NOTE: this should never happen, but it's a safeguard
-	  if (DRAGGING_A_PIECE !== false) return;
-
-	  // get the square
-	  var square = $(e.currentTarget).attr('data-square');
-
-	  // NOTE: this should never happen; defensive
-	  if (validSquare(square) !== true) return;
-
-	  // get the piece on this square
-	  var piece = false;
-	  if (CURRENT_POSITION.hasOwnProperty(square) === true) {
-	    piece = CURRENT_POSITION[square];
-	  }
-	}
-
-	function mouseleaveSquare(e) {
-	  // do not fire this event if we are dragging a piece
-	  // NOTE: this should never happen, but it's a safeguard
-	  if (DRAGGING_A_PIECE !== false) return;
-
-	  // get the square
-	  var square = $(e.currentTarget).attr('data-square');
-
-	  // NOTE: this should never happen; defensive
-	  if (validSquare(square) !== true) return;
-
-	  // get the piece on this square
-	  var piece = false;
-	  if (CURRENT_POSITION.hasOwnProperty(square) === true) {
-	    piece = CURRENT_POSITION[square];
-	  }
 	}
 
 	/********************************
@@ -1258,9 +1223,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // clear the board
 	  boardEl.find('.' + CSS.piece).remove();
 
-	  console.log('drawing opsition!');
-	  console.log(CURRENT_POSITION);
-
 	  // add the pieces
 	  for (var i in CURRENT_POSITION) {
 	    if (CURRENT_POSITION.hasOwnProperty(i) !== true) continue;
@@ -1289,6 +1251,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	/********************************
 		      EVENTS
 	*********************************/
+	function mouseenterSquare(e) {
+	  // do not fire this event if we are dragging a piece
+	  // NOTE: this should never happen, but it's a safeguard
+	  if (DRAGGING_A_PIECE !== false) return;
+
+	  // get the square
+	  var square = $(e.currentTarget).attr('data-square');
+
+	  // NOTE: this should never happen; defensive
+	  if (validSquare(square) !== true) return;
+
+	  // get the piece on this square
+	  var piece = false;
+	  if (CURRENT_POSITION.hasOwnProperty(square) === true) {
+	    piece = CURRENT_POSITION[square];
+	  }
+	}
+
+	function mouseleaveSquare(e) {
+	  // do not fire this event if we are dragging a piece
+	  // NOTE: this should never happen, but it's a safeguard
+	  if (DRAGGING_A_PIECE !== false) return;
+
+	  // get the square
+	  var square = $(e.currentTarget).attr('data-square');
+
+	  // NOTE: this should never happen; defensive
+	  if (validSquare(square) !== true) return;
+
+	  // get the piece on this square
+	  var piece = false;
+	  if (CURRENT_POSITION.hasOwnProperty(square) === true) {
+	    piece = CURRENT_POSITION[square];
+	  }
+	}
+
 	function mouseupWindow(e) {
 	  // do nothing if we are not dragging a piece
 	  if (DRAGGING_A_PIECE !== true) return;
@@ -1371,8 +1369,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  // animation complete
 	  var complete = function complete() {
-	    console.log('animating');
-	    console.log(draggedPieceEl);
 
 	    //   drawPositionInstant();
 	    draggedPieceEl.css('display', 'none');
@@ -1381,8 +1377,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (cfg.hasOwnProperty('onSnapEnd') === true && typeof cfg.onSnapEnd === 'function') {
 	      cfg.onSnapEnd(DRAGGED_PIECE_SOURCE, square, DRAGGED_PIECE);
 	    }
-
-	    console.log('ended complete!');
 	  };
 
 	  // snap the piece to the target square
@@ -1411,7 +1405,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (cfg.onTurnEnd) {
-	      console.log('on turn end!');
 	      cfg.onTurnEnd();
 
 	      drawPositionInstant();
@@ -1566,7 +1559,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// convert FEN string to position object
 	// returns false if the FEN string is invalid
 	function fenToObj(fen) {
-
+	  fen = fen.split(' ')[0];
 	  var rows = fen.split('/');
 	  var position = {};
 
@@ -1755,12 +1748,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	function pieceCodeToFen(piece) {
 	  var tmp = piece.split('');
 
-	  // white piece
+	  // teamA piece
 	  if (tmp[0] === 'a') {
 	    return tmp[1].toUpperCase();
 	  }
 
-	  // black piece
+	  // teamB piece
 	  return tmp[1].toLowerCase();
 	}
 

@@ -8,8 +8,7 @@ module.exports = {
         filename: "bundle.js",
         library: "boardgame",
         libraryTarget: "umd",
-        umdNamedDefine: true,
-        publicPath: './'
+        umdNamedDefine: true
     },
     externals: {
         jquery: 'jQuery'
@@ -26,8 +25,8 @@ module.exports = {
             },
             {
                 test: /\.(jpg|png|gif)$/,
-                include: /public\img/,
-                loader: 'url'
+                include: /\public\img/,
+                loader: 'file-loader?mimetype=image/png'
             }
         ]
     }, plugins: {
