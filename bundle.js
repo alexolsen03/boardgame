@@ -480,6 +480,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: 'terraform',
 			value: function terraform(type, square) {
+				console.log(' i have been given ' + type);
+				// do nothing if they try to terraform a square as
+				// the type it already has
+				if (type === this.terraState[SQUARES[square]]) return;
+
 				this.terraState[SQUARES[square]] = type;
 
 				return this.resetTurn();
@@ -973,6 +978,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    CURRENT_BOARD_POSITION = void 0;
 
 	var SQUARE_SIZE = void 0,
+	    BUTTON_SIZE = void 0,
+	    CURRENT_TERRAFORM_TYPE = void 0,
 	    SQUARE_ELS_IDS = {},
 	    SQUARE_ELS_OFFSETS = void 0,
 	    DRAGGED_PIECE = void 0,
@@ -989,8 +996,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    boardEl = void 0,
 	    draggedPieceEl = void 0,
 	    draggedPieceId = void 0;
-
-	var terraformType = void 0;
 
 	// use unique class names to prevent clashing with anything else on the page
 	// and simplify selectors
@@ -1018,7 +1023,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  unit: 'unit-a2H1d',
 	  terraformList: 'terraform-list',
 	  terraformItem: 'terraform-item',
-	  terraformBtn: 'terraform-btn'
+	  terraformBtn: 'terraform-btn',
+	  terraformBtnHill: 'terraform-btn-hill',
+	  terraformBtnLand: 'terraform-btn-land',
+	  terraformBtnWater: 'terraform-btn-water'
 	};
 
 	function load(containerElIdVal, terraControlsElIdVal, config) {
@@ -1043,6 +1051,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  terraControlsEl = $(terraEle);
 
 	  SQUARE_SIZE = calculateSquareSize();
+	  BUTTON_SIZE = calculateButtonSize();
+
+	  console.log('BUTTON SIZE: ' + BUTTON_SIZE);
+
 	  createElIds();
 
 	  // create the drag piece
@@ -1121,13 +1133,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  html += '<ul class="' + CSS.terraformList + '">';
 
-	  html += '<li class="' + CSS.terraformItem + '">';
+	  html += '<li class="' + CSS.terraformItem + '" style="width: ' + BUTTON_SIZE + 'px;">';
 	  html += '<button id="hillBtn" class="' + CSS.terraformBtn + '">Hill</button>';
 	  html += '</li>';
-	  html += '<li class="' + CSS.terraformItem + '">';
+	  html += '<li class="' + CSS.terraformItem + '" style="width: ' + BUTTON_SIZE + 'px;">';
 	  html += '<button id="landBtn" class="' + CSS.terraformBtn + '">Land</button>';
 	  html += '</li>';
-	  html += '<li class="' + CSS.terraformItem + '">';
+	  html += '<li class="' + CSS.terraformItem + '" style="width: ' + BUTTON_SIZE + 'px;">';
 	  html += '<button id="waterBtn" class="' + CSS.terraformBtn + '">Water</button>';
 	  html += '</li>';
 
@@ -1152,7 +1164,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	// calculates square size based on the width of the container
-	// got a little CSS black magic here, so let me explain:
+	// got a little CSS black magic here.
 	// get the width of the container element (could be anything), reduce by 1 for
 	// fudge factor, and then keep reducing until we find an exact mod 10 for
 	// our square size
@@ -1172,6 +1184,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  return boardWidth / 10;
+	}
+
+	function calculateButtonSize() {
+	  var containerWidth = parseInt(containerEl.width(), 10);
+
+	  // defensive, prevent infinite loop
+	  if (!containerWidth || containerWidth <= 0) {
+	    return 0;
+	  }
+
+	  // pad one pixel
+	  var boardWidth = containerWidth - 1;
+
+	  while (boardWidth % 3 !== 0 && boardWidth > 0) {
+	    boardWidth--;
+	  }
+
+	  return boardWidth / 3;
 	}
 
 	// create random IDs for elements
@@ -1244,7 +1274,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    $('#' + SQUARE_ELS_IDS[i]).append(buildPiece(CURRENT_POSITION[i], false, uuid()));
 	  }
 
-	  terraformType = null;
+	  CURRENT_TERRAFORM_TYPE = null;
 	  TERRAFORMING = false;
 	}
 
@@ -1445,9 +1475,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  if (TERRAFORMING) {
 	    removeSquareHighlights();
-	    var lostSoldiers = cfg.terraform(terraformType, square);
 
-	    CURRENT_BOARD_POSITION[square] = terraformType;
+	    if (CURRENT_TERRAFORM_TYPE === 'l') CURRENT_TERRAFORM_TYPE = undefined;
+
+	    // it is not the turn end since they attempted to terraform the same type
+	    if (CURRENT_TERRAFORM_TYPE === CURRENT_BOARD_POSITION[square]) {
+	      $('.terraform-btn').removeClass('selected');
+	      CURRENT_TERRAFORM_TYPE = undefined;
+	      TERRAFORMING = false;
+	      return;
+	    }
+
+	    console.log(CURRENT_TERRAFORM_TYPE + ' does not equal ' + CURRENT_BOARD_POSITION[square]);
+
+	    var lostSoldiers = cfg.terraform(CURRENT_TERRAFORM_TYPE, square);
+
+	    // update the board state in this file
+	    CURRENT_BOARD_POSITION[square] = CURRENT_TERRAFORM_TYPE;
+
 	    if (cfg.onTurnEnd) {
 
 	      cfg.onTurnEnd();
@@ -1537,13 +1582,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function findTerraformOpts(e) {
-
+	  // remove highlights from square and btns
 	  removeSquareHighlights();
+	  $('.terraform-btn').removeClass('selected');
+
 	  var options = cfg.onTerraform();
 
 	  if (!options || options.length === 0) return;
 
+	  var terraformType = '';
+
 	  if ($(this).text().toLowerCase() === 'hill') terraformType = 'h';else if ($(this).text().toLowerCase() === 'water') terraformType = 'w';else terraformType = 'l';
+
+	  // if they pressed the same button we are canceling the terraform
+	  if (terraformType === CURRENT_TERRAFORM_TYPE) {
+	    CURRENT_TERRAFORM_TYPE = undefined;
+	    TERRAFORMING = false;
+	    return;
+	  }
+
+	  CURRENT_TERRAFORM_TYPE = terraformType;
+
+	  $(this).addClass('selected');
 
 	  options.forEach(function (sq) {
 	    $('[data-square="' + sq + '"]').addClass(CSS.highlight1);
@@ -1846,7 +1906,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, "/* clearfix */\n.clearfix-7da63 {\n  clear: both; }\n\nbody {\n  position: relative; }\n\n/* board */\n.board-b72b1 {\n  border: 2px solid #404040;\n  -webkit-box-sizing: content-box;\n  -moz-box-sizing: content-box;\n  box-sizing: content-box; }\n\n.row-5277c .square-55d63:first-child {\n  border-left: 1px solid #888; }\n\n.row-5277c .square-55d63:first-child .tile {\n  border-top: 1px solid #888; }\n\n/* square */\n.square-55d63 {\n  float: left;\n  position: relative;\n  box-sizing: border-box;\n  border-right: 1px solid #888;\n  border-bottom: 1px solid #888;\n  border-top: 1px solid transparent;\n  border-left: 1px solid transparent;\n  /* disable any native browser highlighting */\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  -khtml-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none; }\n\n.highlight1-32417, .highlight2-9c5d2 {\n  -webkit-box-shadow: inset 0 0 3px 3px yellow;\n  -moz-box-shadow: inset 0 0 3px 3px yellow;\n  box-shadow: inset 0 0 3px 3px yellow; }\n\n.land0 {\n  background-color: #71B16E; }\n\n.land1 {\n  background-color: #287324; }\n\n.water0 {\n  background-color: blue; }\n\n.unit-a2H1d {\n  position: absolute;\n  right: 0px;\n  left: 0px;\n  top: 10%;\n  margin-left: auto;\n  margin-right: auto;\n  border-radius: 50%;\n  background-color: purple;\n  background-position: 0 0;\n  background-repeat: round;\n  border: 2px solid black; }\n\n.unit-a2H1d.teamB-1e1d7 {\n  background-color: white;\n  color: white; }\n\n.unit-a2H1d.teamA-3c85d {\n  background-color: #C23A4C;\n  color: #C23A4C; }\n\n.unit-a2H1d img {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 10%;\n  margin-left: auto;\n  margin-right: auto; }\n", ""]);
+	exports.push([module.id, "/* clearfix */\n.clearfix-7da63 {\n  clear: both; }\n\nbody {\n  position: relative; }\n\n/* board */\n.board-b72b1 {\n  border: 2px solid #404040;\n  -webkit-box-sizing: content-box;\n  -moz-box-sizing: content-box;\n  box-sizing: content-box; }\n\n.row-5277c .square-55d63:first-child {\n  border-left: 1px solid #888; }\n\n.row-5277c .square-55d63:first-child .tile {\n  border-top: 1px solid #888; }\n\n/* square */\n.square-55d63 {\n  float: left;\n  position: relative;\n  box-sizing: border-box;\n  border-right: 1px solid #888;\n  border-bottom: 1px solid #888;\n  border-top: 1px solid transparent;\n  border-left: 1px solid transparent;\n  /* disable any native browser highlighting */\n  -webkit-touch-callout: none;\n  -webkit-user-select: none;\n  -khtml-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none; }\n\n.highlight1-32417, .highlight2-9c5d2 {\n  -webkit-box-shadow: inset 0 0 3px 3px yellow;\n  -moz-box-shadow: inset 0 0 3px 3px yellow;\n  box-shadow: inset 0 0 3px 3px yellow; }\n\n.land0 {\n  background-color: #71B16E; }\n\n.land1 {\n  background-color: #287324; }\n\n.water0 {\n  background-color: blue; }\n\n.unit-a2H1d {\n  position: absolute;\n  right: 0px;\n  left: 0px;\n  top: 10%;\n  margin-left: auto;\n  margin-right: auto;\n  border-radius: 50%;\n  background-color: purple;\n  background-position: 0 0;\n  background-repeat: round;\n  border: 2px solid black; }\n\n.unit-a2H1d.teamB-1e1d7 {\n  background-color: white;\n  color: white; }\n\n.unit-a2H1d.teamA-3c85d {\n  background-color: #C23A4C;\n  color: #C23A4C; }\n\n.unit-a2H1d img {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 10%;\n  margin-left: auto;\n  margin-right: auto; }\n\n.terraform-list .terraform-item {\n  display: inline-block;\n  font-size: 14pt; }\n  .terraform-list .terraform-item .terraform-btn {\n    padding: 8px 6px;\n    box-sizing: border-box;\n    width: 100%; }\n    .terraform-list .terraform-item .terraform-btn.selected {\n      -webkit-box-shadow: inset 0 0 3px 3px yellow;\n      -moz-box-shadow: inset 0 0 3px 3px yellow;\n      box-shadow: inset 0 0 3px 3px yellow; }\n    .terraform-list .terraform-item .terraform-btn#hillBtn {\n      border: 2px solid #287324;\n      background-color: #3cad36; }\n    .terraform-list .terraform-item .terraform-btn#landBtn {\n      border: 2px solid #71B16E;\n      background-color: #a2cca0; }\n    .terraform-list .terraform-item .terraform-btn#waterBtn {\n      border: 2px solid blue;\n      background-color: #4d4dff; }\n", ""]);
 
 	// exports
 
