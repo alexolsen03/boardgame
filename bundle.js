@@ -341,6 +341,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 				fen += ' ' + this.turn + ' ' + this.turnActions;
 
+				var gameStatus = this.gameOver();
+				if (gameStatus) {
+					fen += ' ' + gameStatus;
+				}
+
 				return fen;
 			}
 		}, {
@@ -449,7 +454,6 @@ return /******/ (function(modules) { // webpackBootstrap
 					var square = this.SQUARES[i]; // square value - ex. a8
 
 					if (piece === null || piece.color !== us) {
-						console.log('not us!');
 						continue;
 					}
 				}
@@ -457,22 +461,40 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: 'generateTerraformOptions',
 			value: function generateTerraformOptions() {
+				var _this = this;
+
 				var options = [];
 				var me = this;
 
-				for (var i = 0; i < this.board.length; i++) {
-					var piece = this.board[i];
+				var _loop = function _loop(i) {
+					var board = _this.board;
+					var piece = board[i];
 
 					if (piece && piece.type === 'm' && piece.color === me.turn && piece.performedActions === 0 && me.turnActions === 0) {
-						var space = indexToNotation(i);
+						(function () {
+							var space = indexToNotation(i);
 
-						var oneAway = getTilesInCircleFrom(indexToNotation(i), 1);
-						var twoAway = getTilesInCircleFrom(indexToNotation(i), 2);
+							var oneAway = getTilesInCircleFrom(indexToNotation(i), 1);
+							var twoAway = getTilesInCircleFrom(indexToNotation(i), 2);
 
-						var available = oneAway.concat(twoAway);
+							var allAround = oneAway.concat(twoAway);
+							var available = [];
 
-						options = options.concat(available);
+							allAround.forEach(function (space) {
+
+								var potPiece = board[SQUARES[space]];
+
+								// if there is no piece in the space, add it
+								if (!potPiece) available.push(space);
+							});
+
+							options = options.concat(available);
+						})();
 					}
+				};
+
+				for (var i = 0; i < this.board.length; i++) {
+					_loop(i);
 				}
 
 				return options;
@@ -480,7 +502,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: 'terraform',
 			value: function terraform(type, square) {
-				console.log(' i have been given ' + type);
 				// do nothing if they try to terraform a square as
 				// the type it already has
 				if (type === this.terraState[SQUARES[square]]) return;
@@ -512,15 +533,11 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				});
 
-				console.log('reset.');
-
 				return spaces;
 			}
 		}, {
 			key: 'isActionsLeft',
 			value: function isActionsLeft() {
-				console.log(this.turnActions + ' out of ' + MAX_ACTIONS_ALLOWED);
-
 				if (this.turnActions >= MAX_ACTIONS_ALLOWED) {
 					return false;
 				}
@@ -595,6 +612,50 @@ return /******/ (function(modules) { // webpackBootstrap
 				});
 
 				return power;
+			}
+		}, {
+			key: 'gameOver',
+			value: function gameOver() {
+				// conditions for ending the game
+				var isMages = this.noMages();
+
+				if (!isMages) {
+					return undefined;
+				} else {
+					return isMages;
+				}
+			}
+		}, {
+			key: 'noMages',
+			value: function noMages() {
+				var count = {};
+				count[TEAM_A] = 0;
+				count[TEAM_B] = 0;
+
+				var board = this.board;
+
+				for (var i = 0; i < this.board.length; i++) {
+					var piece = board[i];
+
+					if (piece && piece.type === 'm') {
+						var color = piece.color;
+						count[color] = count[color] + 1;
+					}
+				}
+
+				if (count[TEAM_A] === 0 && count[TEAM_B] === 0) {
+					// draw
+					return 'draw';
+				} else if (count[TEAM_A] === 0 && count[TEAM_B] > 0) {
+					// TEAM_B win
+					return TEAM_B;
+				} else if (count[TEAM_A] > 0 && count[TEAM_B] === 0) {
+					// TEAM_A win
+					return TEAM_A;
+				} else {
+					// ongoing
+					return;
+				}
 			}
 		}]);
 
