@@ -1,25 +1,36 @@
 var webpack = require('webpack');
+var path = require('path');
 
 module.exports = {
     entry: "./index.js",
     output: {
         path: __dirname,
-        filename: "bundle.js"
+        filename: "bundle.js",
+        library: "boardgame",
+        libraryTarget: "umd",
+        umdNamedDefine: true
     },
     externals: {
         jquery: 'jQuery'
     },
     module: {
         loaders: [
-            { test: /\.css$/, loader: "style!css" },
+            { test: /\.scss$/,
+              exclude: /node_modules/,
+              loader: "style!css!sass" },
             {
-              test: /\.jsx?$/,
+              test: /\.js?$/,
               exclude: /(node_modules|bower_components)/,
-              loader: 'babel-loader', // 'babel-loader' is also a legal name to reference
-              query: {
-                presets: ['es2015']
-              }
+              loader: 'babel', // 'babel-loader' is also a legal name to reference
+            },
+            {
+                test: /\.(jpg|png|gif)$/,
+                include: /\public\img/,
+                loader: 'file-loader?mimetype=image/png'
             }
         ]
+    }, plugins: {
+        $: 'jquery',
+        jQuery: 'jquery'
     }
 };

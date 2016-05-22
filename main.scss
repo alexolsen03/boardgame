@@ -1,3 +1,8 @@
+$hill: #287324;
+$land: #71B16E;
+$water: blue;
+$highlight-1: yellow;
+
 /* clearfix */
 .clearfix-7da63 {
   clear: both;
@@ -44,21 +49,21 @@ body{
 }
 
 .highlight1-32417, .highlight2-9c5d2{
-  -webkit-box-shadow: inset 0 0 3px 3px yellow;
-  -moz-box-shadow: inset 0 0 3px 3px yellow;
-  box-shadow: inset 0 0 3px 3px yellow;
+  -webkit-box-shadow: inset 0 0 3px 3px $highlight-1;
+  -moz-box-shadow: inset 0 0 3px 3px $highlight-1;
+  box-shadow: inset 0 0 3px 3px $highlight-1;
 }
 
 .land0{
-  background-color: #71B16E;
+  background-color: $land;
 }
 
 .land1{
-  background-color: #287324;
+  background-color: $hill;
 }
 
 .water0{
-  background-color: blue;
+  background-color: $water;
 }
 
 .unit-a2H1d{
@@ -92,4 +97,40 @@ body{
   top: 10%;
   margin-left: auto;
   margin-right: auto;
+}
+
+.terraform-list{
+
+  .terraform-item{
+    display: inline-block;
+    font-size: 14pt;
+
+    .terraform-btn{
+      font-size: 10pt;
+      padding: 8px 6px;
+      box-sizing: border-box;
+      width: 100%;
+
+      &.selected{
+        -webkit-box-shadow: inset 0 0 3px 3px $highlight-1;
+        -moz-box-shadow: inset 0 0 3px 3px $highlight-1;
+        box-shadow: inset 0 0 3px 3px $highlight-1;
+      }
+
+      &#hillBtn{
+        border: 2px solid $hill;
+        background-color: lighten($hill, 15%);
+      }
+
+      &#landBtn{
+        border: 2px solid $land;
+        background-color: lighten($land, 15%);
+      }
+
+      &#waterBtn{
+        border: 2px solid $water;
+        background-color: lighten($water, 15%);
+      }
+    }
+  }
 }
