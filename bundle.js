@@ -62,13 +62,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _tilemages = __webpack_require__(1);
 
-	var _tilemages2 = _interopRequireDefault(_tilemages);
-
 	var _board = __webpack_require__(2);
-
-	var _board2 = _interopRequireDefault(_board);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	__webpack_require__(3);
 	__webpack_require__(7);
@@ -81,8 +75,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(14);
 
 	exports.default = {
-		TileMages: _tilemages2.default,
-		load: _board2.default
+		TileMages: _tilemages.TileMages,
+		load: _board.load
 	};
 	module.exports = exports['default'];
 

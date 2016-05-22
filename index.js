@@ -1,5 +1,5 @@
-import TileMages from './lib/tilemages';
-import load from './lib/board';
+import { TileMages } from './lib/tilemages';
+import { load } from './lib/board';
 
 require('./main.scss');
 require('file?name=[path][name].[ext]!./public/img/aA.png');
