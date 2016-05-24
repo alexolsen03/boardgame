@@ -1041,7 +1041,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    DRAGGED_PIECE_LOCATION = void 0,
 	    DRAGGED_PIECE_SOURCE = void 0,
 	    DRAGGING_A_PIECE = false,
-	    TERRAFORMING = false;
+	    TERRAFORMING = false,
+	    TERRAFORM_OPTIONS = void 0;
 
 	var cfg = void 0,
 	    containerElId = void 0,
@@ -1533,15 +1534,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    if (CURRENT_TERRAFORM_TYPE === 'l') CURRENT_TERRAFORM_TYPE = undefined;
 
-	    // it is not the turn end since they attempted to terraform the same type
-	    if (CURRENT_TERRAFORM_TYPE === CURRENT_BOARD_POSITION[square]) {
+	    // it is not the turn end since they attempted to terraform the
+	    // same type so no action was taken
+	    if (CURRENT_TERRAFORM_TYPE === CURRENT_BOARD_POSITION[square] || TERRAFORM_OPTIONS.indexOf(square) === -1) {
 	      $('.terraform-btn').removeClass('selected');
 	      CURRENT_TERRAFORM_TYPE = undefined;
 	      TERRAFORMING = false;
+	      TERRAFORM_OPTIONS = [];
 	      return;
 	    }
-
-	    console.log(CURRENT_TERRAFORM_TYPE + ' does not equal ' + CURRENT_BOARD_POSITION[square]);
 
 	    var lostSoldiers = cfg.terraform(CURRENT_TERRAFORM_TYPE, square);
 
@@ -1653,11 +1654,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (terraformType === CURRENT_TERRAFORM_TYPE) {
 	    CURRENT_TERRAFORM_TYPE = undefined;
 	    TERRAFORMING = false;
+	    TERRAFORM_OPTIONS = [];
 	    return;
 	  }
 
 	  CURRENT_TERRAFORM_TYPE = terraformType;
+	  TERRAFORM_OPTIONS = options;
 
+	  // show btn as selected so they can unselect easier
 	  $(this).addClass('selected');
 
 	  options.forEach(function (sq) {
