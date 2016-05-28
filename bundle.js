@@ -454,18 +454,24 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 		}, {
 			key: 'generateTerraformOptions',
-			value: function generateTerraformOptions() {
+			value: function generateTerraformOptions(type) {
 				var _this = this;
+
+				if (type === 'l') type = undefined;
 
 				var options = [];
 				var me = this;
 
 				var _loop = function _loop(i) {
 					var board = _this.board;
+					var terraState = _this.terraState;
 					var piece = board[i];
 
-					if (piece && piece.type === 'm' && piece.color === me.turn && piece.performedActions === 0 && me.turnActions === 0) {
+					if (piece && piece.type === 'm' && piece.color === me.turn) {
 						(function () {
+							//&&
+							//   piece.performedActions === 0 &&
+							//   me.turnActions === 0){
 							var space = indexToNotation(i);
 
 							var oneAway = getTilesInCircleFrom(indexToNotation(i), 1);
@@ -477,9 +483,22 @@ return /******/ (function(modules) { // webpackBootstrap
 							allAround.forEach(function (space) {
 
 								var potPiece = board[SQUARES[space]];
+								var terraformAny = false;
+
+								// if not land, we cant terra any state
+								// water can not go directly to hill
+								if (type === undefined) {
+									terraformAny = true;
+								}
 
 								// if there is no piece in the space, add it
-								if (!potPiece) available.push(space);
+								if (!potPiece) {
+									if (terraformAny) {
+										if (terraState[SQUARES[space]]) available.push(space);
+									} else {
+										if (!terraState[SQUARES[space]]) available.push(space);
+									}
+								}
 							});
 
 							options = options.concat(available);
@@ -502,7 +521,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 				this.terraState[SQUARES[square]] = type;
 
-				return this.resetTurn();
+				this.turnActions += 1;
+
+				if (this.turnActions >= MAX_ACTIONS_ALLOWED) {
+					return this.resetTurn();
+				}
 			}
 		}, {
 			key: 'resetTurn',
@@ -1109,8 +1132,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  SQUARE_SIZE = calculateSquareSize();
 	  BUTTON_SIZE = calculateButtonSize();
 
-	  console.log('BUTTON SIZE: ' + BUTTON_SIZE);
-
 	  createElIds();
 
 	  // create the drag piece
@@ -1532,6 +1553,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (TERRAFORMING) {
 	    removeSquareHighlights();
 
+	    // we only keep track of 'h' and 'w' so making the land
+	    // as undefined here
 	    if (CURRENT_TERRAFORM_TYPE === 'l') CURRENT_TERRAFORM_TYPE = undefined;
 
 	    // it is not the turn end since they attempted to terraform the
@@ -1642,15 +1665,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	  removeSquareHighlights();
 	  $('.terraform-btn').removeClass('selected');
 
-	  var options = cfg.onTerraform();
-
-	  if (!options || options.length === 0) return;
-
 	  var terraformType = '';
 
 	  if ($(this).text().toLowerCase() === 'hill') terraformType = 'h';else if ($(this).text().toLowerCase() === 'water') terraformType = 'w';else terraformType = 'l';
 
-	  // if they pressed the same button we are canceling the terraform
+	  var options = cfg.onTerraform(terraformType);
+
+	  // if there are no options to terraform
+	  if (!options || options.length === 0) {
+	    CURRENT_TERRAFORM_TYPE = undefined;
+	    TERRAFORMING = false;
+	    TERRAFORM_OPTIONS = [];
+	    return;
+	  }
+
+	  // if they attempted to terraform the same type we are canceling the terraform
 	  if (terraformType === CURRENT_TERRAFORM_TYPE) {
 	    CURRENT_TERRAFORM_TYPE = undefined;
 	    TERRAFORMING = false;
